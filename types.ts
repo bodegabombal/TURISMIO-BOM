@@ -6,9 +6,10 @@ export interface Movement {
   date: string;
   itemId: string;
   itemName: string;
-  type: 'IN' | 'OUT' | 'ADJUST' | 'PRODUCTION';
+  type: 'IN' | 'OUT'; // Simplified for UI
   quantity: number;
-  destination?: string; // Client or location
+  reason: string; // Motivo (Venta, Merma, etc)
+  user: string; // Quien fue
   notes?: string;
 }
 

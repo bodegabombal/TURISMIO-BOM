@@ -6,16 +6,16 @@ import { InventoryItemCard } from './InventoryItem';
 interface InventoryListProps {
   items: InventoryItem[];
   type: InventoryType;
-  onUpdateStock: (id: string, change: number) => void;
+  onOpenMovement: (item: InventoryItem) => void;
   onRemoveItem: (id: string) => void;
 }
 
-export const InventoryList: React.FC<InventoryListProps> = ({ items, type, onUpdateStock, onRemoveItem }) => {
+export const InventoryList: React.FC<InventoryListProps> = ({ items, type, onOpenMovement, onRemoveItem }) => {
   if (items.length === 0) {
     return (
-      <div className="text-center py-20 bg-slate-800/50 rounded-xl border border-dashed border-slate-700">
-        <p className="text-slate-500 text-xl">No hay registros en esta sección.</p>
-        <p className="text-slate-400 mt-2">Pulsa el botón + para añadir stock.</p>
+      <div className="text-center py-20 bg-gray-100/50 rounded-xl border border-dashed border-gray-300">
+        <p className="text-gray-500 text-xl font-medium">No hay registros en esta sección.</p>
+        <p className="text-gray-400 mt-2">Pulsa el botón + para añadir stock.</p>
       </div>
     );
   }
@@ -26,7 +26,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({ items, type, onUpd
         <InventoryItemCard
           key={item.id}
           item={item}
-          onUpdateStock={onUpdateStock}
+          onOpenMovement={onOpenMovement}
           onRemove={onRemoveItem}
         />
       ))}

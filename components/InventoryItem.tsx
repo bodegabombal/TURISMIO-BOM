@@ -4,11 +4,11 @@ import type { InventoryItem, GrapeBatch, BulkWine, FinishedWine, PackagingMateri
 
 interface ItemProps {
   item: InventoryItem;
-  onUpdateStock: (id: string, change: number) => void;
+  onOpenMovement: (item: InventoryItem) => void;
   onRemove: (id: string) => void;
 }
 
-export const InventoryItemCard: React.FC<ItemProps> = ({ item, onUpdateStock, onRemove }) => {
+export const InventoryItemCard: React.FC<ItemProps> = ({ item, onOpenMovement, onRemove }) => {
   
   // Helpers to safely access specific properties based on type guards or direct checks
   const isGrape = (i: InventoryItem): i is GrapeBatch => i.type === 'grape';
@@ -23,7 +23,8 @@ export const InventoryItemCard: React.FC<ItemProps> = ({ item, onUpdateStock, on
   let quantityLabel = 'Stock';
   let quantityValue = 0;
   let unit = 'Uni';
-  let badges: {label: string, color: string}[] = [];
+  let badges: {label: string, color: string, border: string}[] = [];
+  let barColor = '';
 
   if (isGrape(item)) {
     title = `${item.variety} (${item.id})`;
@@ -32,8 +33,9 @@ export const InventoryItemCard: React.FC<ItemProps> = ({ item, onUpdateStock, on
     quantityValue = item.weight;
     unit = 'Kg';
     quantityLabel = 'Peso Actual';
-    badges.push({ label: `${item.sugar}° Baumé`, color: 'bg-purple-900 text-purple-200' });
-    badges.push({ label: `${item.acidity} g/L Acidez`, color: 'bg-pink-900 text-pink-200' });
+    barColor = 'bg-purple-500';
+    badges.push({ label: `${item.sugar}° Baumé`, color: 'bg-purple-50 text-purple-700', border: 'border-purple-200' });
+    badges.push({ label: `${item.acidity} g/L Acidez`, color: 'bg-pink-50 text-pink-700', border: 'border-pink-200' });
   } 
   else if (isBulk(item)) {
     title = `Tanque ${item.id}`;
@@ -42,9 +44,10 @@ export const InventoryItemCard: React.FC<ItemProps> = ({ item, onUpdateStock, on
     quantityValue = item.volume;
     unit = 'Lts';
     quantityLabel = 'Volumen';
-    if(item.alcohol) badges.push({ label: `${item.alcohol}% Vol`, color: 'bg-amber-900 text-amber-200' });
-    if(item.barrelType) badges.push({ label: item.barrelType, color: 'bg-orange-900 text-orange-200' });
-    if(item.fermentationStartDate) badges.push({ label: `Inicio: ${item.fermentationStartDate}`, color: 'bg-slate-700 text-slate-300'});
+    barColor = 'bg-amber-500';
+    if(item.alcohol) badges.push({ label: `${item.alcohol}% Vol`, color: 'bg-amber-50 text-amber-700', border: 'border-amber-200' });
+    if(item.barrelType) badges.push({ label: item.barrelType, color: 'bg-orange-50 text-orange-700', border: 'border-orange-200' });
+    if(item.fermentationStartDate) badges.push({ label: `Inicio: ${item.fermentationStartDate}`, color: 'bg-gray-100 text-gray-600', border: 'border-gray-200'});
   } 
   else if (isFinished(item)) {
     title = item.name;
@@ -52,11 +55,12 @@ export const InventoryItemCard: React.FC<ItemProps> = ({ item, onUpdateStock, on
     details = `${item.varietal} • ${item.vintage}`;
     quantityValue = item.quantity;
     unit = 'Botellas';
-    if(item.format) badges.push({ label: item.format, color: 'bg-indigo-900 text-indigo-200' });
-    if(item.location) badges.push({ label: `📍 ${item.location}`, color: 'bg-blue-900 text-blue-200' });
-    if(item.sku) badges.push({ label: `SKU: ${item.sku}`, color: 'bg-slate-700 text-slate-300' });
+    barColor = 'bg-indigo-500';
+    if(item.format) badges.push({ label: item.format, color: 'bg-indigo-50 text-indigo-700', border: 'border-indigo-200' });
+    if(item.location) badges.push({ label: `📍 ${item.location}`, color: 'bg-blue-50 text-blue-700', border: 'border-blue-200' });
+    if(item.sku) badges.push({ label: `SKU: ${item.sku}`, color: 'bg-gray-100 text-gray-600', border: 'border-gray-200' });
     if (item.minStock && quantityValue <= item.minStock) {
-        badges.push({ label: '⚠️ Stock Bajo', color: 'bg-red-900 text-red-200 border border-red-700' });
+        badges.push({ label: '⚠️ Stock Bajo', color: 'bg-red-50 text-red-700', border: 'border-red-200' });
     }
   } 
   else if (isMaterial(item)) {
@@ -65,29 +69,24 @@ export const InventoryItemCard: React.FC<ItemProps> = ({ item, onUpdateStock, on
     details = item.id;
     quantityValue = item.quantity;
     unit = 'Uni';
+    barColor = 'bg-emerald-500';
     if (item.minStock && quantityValue <= item.minStock) {
-        badges.push({ label: '⚠️ Stock Bajo', color: 'bg-red-900 text-red-200 border border-red-700' });
+        badges.push({ label: '⚠️ Stock Bajo', color: 'bg-red-50 text-red-700', border: 'border-red-200' });
     }
   }
 
-  const step = isBulk(item) || isGrape(item) ? 10 : 1; // Increment by 10 for kg/liters, 1 for units
-
   return (
-    <div className="bg-slate-800 rounded-xl shadow-lg p-5 flex flex-col transition-all duration-300 hover:shadow-indigo-500/10 hover:ring-1 hover:ring-slate-600 relative overflow-hidden group">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col transition-all duration-300 hover:shadow-md hover:border-indigo-300 relative overflow-hidden group">
       
-      {/* Top Bar decoration based on type */}
-      <div className={`absolute top-0 left-0 w-full h-1 ${
-          isGrape(item) ? 'bg-purple-500' : 
-          isBulk(item) ? 'bg-amber-500' : 
-          isMaterial(item) ? 'bg-emerald-500' : 'bg-indigo-500'
-      }`}></div>
+      {/* Top Bar decoration */}
+      <div className={`absolute top-0 left-0 w-full h-1.5 ${barColor}`}></div>
 
       <div className="flex-grow">
         <div className="flex justify-between items-start mb-2">
-            <h2 className="text-xl font-bold text-white pr-2 truncate" title={title}>{title}</h2>
+            <h2 className="text-xl font-bold text-gray-900 pr-2 truncate" title={title}>{title}</h2>
             <button 
                 onClick={() => onRemove(item.id)} 
-                className="text-slate-600 hover:text-red-400 transition-colors p-1 opacity-0 group-hover:opacity-100"
+                className="text-gray-400 hover:text-red-500 transition-colors p-1 opacity-0 group-hover:opacity-100"
                 aria-label="Eliminar"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -96,47 +95,42 @@ export const InventoryItemCard: React.FC<ItemProps> = ({ item, onUpdateStock, on
             </button>
         </div>
         
-        <p className="text-indigo-400 font-medium text-sm">{subtitle}</p>
-        <p className="text-slate-400 text-xs mt-1">{details}</p>
+        <p className="text-indigo-600 font-medium text-sm">{subtitle}</p>
+        <p className="text-gray-500 text-xs mt-1">{details}</p>
         
         <div className="flex flex-wrap gap-2 mt-3">
             {badges.map((b, idx) => (
-                <span key={idx} className={`text-xs px-2 py-1 rounded-full ${b.color}`}>
+                <span key={idx} className={`text-xs px-2 py-1 rounded-full border ${b.color} ${b.border} font-medium`}>
                     {b.label}
                 </span>
             ))}
         </div>
 
         {item.notes && (
-            <p className="text-slate-500 mt-3 text-xs italic border-l-2 border-slate-700 pl-2 line-clamp-2">
+            <p className="text-gray-500 mt-3 text-xs italic border-l-2 border-gray-300 pl-2 line-clamp-2">
                 "{item.notes}"
             </p>
         )}
       </div>
 
-      <div className="mt-6 pt-4 border-t border-slate-700/50 flex justify-between items-center">
+      <div className="mt-6 pt-4 border-t border-gray-100 flex justify-between items-end">
         <div className="text-left">
-          <p className="text-xs text-slate-400 uppercase tracking-wide">{quantityLabel}</p>
+          <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">{quantityLabel}</p>
           <div className="flex items-baseline gap-1">
-            <p className="text-2xl font-bold text-white">{quantityValue}</p>
-            <span className="text-xs text-slate-500">{unit}</span>
+            <p className="text-2xl font-bold text-gray-800">{quantityValue}</p>
+            <span className="text-xs text-gray-500">{unit}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onUpdateStock(item.id, -step)}
-            disabled={quantityValue === 0}
-            className="bg-slate-700 hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold w-9 h-9 rounded-lg flex items-center justify-center transition shadow-sm"
-          >
-            -
-          </button>
-          <button
-            onClick={() => onUpdateStock(item.id, step)}
-            className="bg-slate-700 hover:bg-slate-600 text-white font-bold w-9 h-9 rounded-lg flex items-center justify-center transition shadow-sm"
-          >
-            +
-          </button>
-        </div>
+        
+        <button
+            onClick={() => onOpenMovement(item)}
+            className="px-4 py-2 bg-gray-100 hover:bg-white hover:border-gray-300 border border-transparent text-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 shadow-sm"
+        >
+            <span>Movimientos</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+        </button>
       </div>
     </div>
   );

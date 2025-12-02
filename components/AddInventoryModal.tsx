@@ -9,29 +9,24 @@ interface AddModalProps {
 }
 
 export const AddInventoryModal: React.FC<AddModalProps> = ({ type, onClose, onAdd }) => {
-  // We use a large generic state object, but only render relevant fields
   const [formData, setFormData] = useState<any>({
-    // Common
     notes: '',
-    // Grape
     variety: '', vineyard: '', harvestDate: new Date().toISOString().split('T')[0], 
     weight: 1000, sugar: 0, acidity: 0,
-    // Bulk
     tankId: '', batchId: '', volume: 0, stage: 'Fermentación', alcohol: 0, barrelType: '',
     fermentationStartDate: '', fermentationEndDate: '', rackingDate: '',
-    // Finished
     name: '', winery: '', vintage: new Date().getFullYear(), format: '750ml', 
     sku: '', location: '', quantity: 0, cost: 0, minStock: 0,
     bottlingDate: '',
-    // Material
     materialName: '', supplier: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type: inputType } = e.target;
+    const { name, value } = e.target;
+    // Store raw value to prevent cursor jumping or decimal deletion (e.g. typing "1.")
     setFormData((prev: any) => ({
       ...prev,
-      [name]: inputType === 'number' ? parseFloat(value) || 0 : value,
+      [name]: value,
     }));
   };
 
@@ -40,6 +35,12 @@ export const AddInventoryModal: React.FC<AddModalProps> = ({ type, onClose, onAd
     const timestamp = Date.now();
     let newItem: InventoryItem;
 
+    // Helper to safely parse numbers at submission time
+    const getNum = (key: string) => {
+        const val = parseFloat(formData[key]);
+        return isNaN(val) ? 0 : val;
+    };
+
     if (type === 'grape') {
         newItem = {
             id: `grape-${formData.variety.substring(0,3)}-${timestamp}`,
@@ -47,10 +48,10 @@ export const AddInventoryModal: React.FC<AddModalProps> = ({ type, onClose, onAd
             variety: formData.variety,
             vineyard: formData.vineyard,
             harvestDate: formData.harvestDate,
-            weight: formData.weight,
-            initialWeight: formData.weight,
-            sugar: formData.sugar,
-            acidity: formData.acidity,
+            weight: getNum('weight'),
+            initialWeight: getNum('weight'),
+            sugar: getNum('sugar'),
+            acidity: getNum('acidity'),
             notes: formData.notes
         };
     } else if (type === 'bulk') {
@@ -58,9 +59,9 @@ export const AddInventoryModal: React.FC<AddModalProps> = ({ type, onClose, onAd
             id: formData.tankId || `TANK-${timestamp}`,
             type: 'bulk',
             batchId: formData.batchId,
-            volume: formData.volume,
+            volume: getNum('volume'),
             stage: formData.stage,
-            alcohol: formData.alcohol,
+            alcohol: getNum('alcohol'),
             barrelType: formData.barrelType,
             fermentationStartDate: formData.fermentationStartDate || undefined,
             fermentationEndDate: formData.fermentationEndDate || undefined,
@@ -73,27 +74,26 @@ export const AddInventoryModal: React.FC<AddModalProps> = ({ type, onClose, onAd
             type: 'material',
             name: formData.materialName,
             supplier: formData.supplier,
-            quantity: formData.quantity,
-            minStock: formData.minStock,
+            quantity: getNum('quantity'),
+            minStock: getNum('minStock'),
             notes: formData.notes
         };
     } else {
-        // Finished Wine
         newItem = {
             id: formData.sku || `SKU-${timestamp}`,
             type: 'finished',
             name: formData.name,
             winery: formData.winery,
-            vintage: formData.vintage,
-            varietal: formData.variety, // reusing variety field
-            region: formData.vineyard, // reusing vineyard field as region
+            vintage: getNum('vintage'),
+            varietal: formData.variety,
+            region: formData.vineyard,
             format: formData.format,
             location: formData.location,
             sku: formData.sku,
             lotCode: `L-${timestamp}`,
-            quantity: formData.quantity,
-            cost: formData.cost,
-            minStock: formData.minStock,
+            quantity: getNum('quantity'),
+            cost: getNum('cost'),
+            minStock: getNum('minStock'),
             bottlingDate: formData.bottlingDate || undefined,
             notes: formData.notes
         };
@@ -105,39 +105,39 @@ export const AddInventoryModal: React.FC<AddModalProps> = ({ type, onClose, onAd
 
   const Input = ({ label, name, type = "text", required = false, placeholder = "" }: any) => (
       <div>
-        <label htmlFor={name} className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
+        <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
         <input 
             type={type} name={name} id={name} required={required} 
             placeholder={placeholder}
+            step={type === 'number' ? "any" : undefined}
             value={formData[name]} onChange={handleChange} 
-            className="w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none sm:text-sm" 
+            className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none sm:text-sm transition-all" 
         />
       </div>
   );
 
   return (
     <div 
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <div 
-        className="bg-slate-800 rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-700"
+        className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
-          <h2 className="text-2xl font-bold text-white">
+        <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+          <h2 className="text-2xl font-bold text-gray-900">
             {type === 'grape' && '🍇 Recepción de Uva'}
             {type === 'bulk' && '🍷 Ingreso Tanque / Granel'}
             {type === 'finished' && '🍾 Embotellado / Producto Final'}
             {type === 'material' && '📦 Ingreso de Insumos'}
           </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white text-2xl">&times;</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl transition-colors">&times;</button>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
-            {/* GRAPE FIELDS */}
             {type === 'grape' && (
                 <>
                     <Input label="Variedad" name="variety" required />
@@ -149,15 +149,14 @@ export const AddInventoryModal: React.FC<AddModalProps> = ({ type, onClose, onAd
                 </>
             )}
 
-            {/* BULK WINE FIELDS */}
             {type === 'bulk' && (
                 <>
                     <Input label="Identificador Tanque" name="tankId" required placeholder="Ej: T-INOX-01" />
                     <Input label="Lote Interno" name="batchId" required />
                     <Input label="Volumen Actual (Litros)" name="volume" type="number" required />
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Etapa</label>
-                        <select name="stage" value={formData.stage} onChange={handleChange} className="w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Etapa</label>
+                        <select name="stage" value={formData.stage} onChange={handleChange} className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 focus:ring-2 focus:ring-indigo-500">
                             <option>Fermentación</option>
                             <option>Maceración</option>
                             <option>Prensado</option>
@@ -168,33 +167,29 @@ export const AddInventoryModal: React.FC<AddModalProps> = ({ type, onClose, onAd
                     </div>
                     <Input label="% Alcohol" name="alcohol" type="number" />
                     <Input label="Desc. Barrica (si aplica)" name="barrelType" placeholder="Ej: Roble Francés" />
-                    
                     <Input label="Inicio Fermentación" name="fermentationStartDate" type="date" />
                     <Input label="Fin Fermentación" name="fermentationEndDate" type="date" />
                     <Input label="Fecha Trasiego" name="rackingDate" type="date" />
                 </>
             )}
 
-            {/* FINISHED WINE FIELDS */}
             {type === 'finished' && (
                 <>
                     <Input label="Nombre Comercial" name="name" required />
                     <Input label="Bodega / Marca" name="winery" required />
                     <Input label="SKU" name="sku" placeholder="Ej: MAL22-750" />
                     <Input label="Variedad" name="variety" />
-                    <Input label="Región" name="vineyard" /> {/* reusing vineyard field */}
+                    <Input label="Región" name="vineyard" />
                     <Input label="Año (Vintage)" name="vintage" type="number" />
                     <Input label="Formato" name="format" placeholder="Ej: 750ml" />
                     <Input label="Ubicación" name="location" placeholder="Pasillo A, Fila 2" />
                     <Input label="Cantidad Botellas" name="quantity" type="number" required />
-                    
                     <Input label="Fecha Embotellado" name="bottlingDate" type="date" />
                     <Input label="Costo Unitario ($)" name="cost" type="number" />
                     <Input label="Stock Mínimo" name="minStock" type="number" />
                 </>
             )}
 
-            {/* MATERIAL FIELDS */}
             {type === 'material' && (
                 <>
                     <Input label="Tipo Material" name="materialName" required placeholder="Ej: Corcho, Botella" />
@@ -206,17 +201,17 @@ export const AddInventoryModal: React.FC<AddModalProps> = ({ type, onClose, onAd
           </div>
 
           <div className="pt-2">
-            <label htmlFor="notes" className="block text-sm font-medium text-slate-300 mb-1">Notas / Trazabilidad</label>
-            <textarea name="notes" id="notes" rows={3} placeholder="Detalles extra, IDs de lotes origen, etc." value={formData.notes} onChange={handleChange} className="w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none sm:text-sm"></textarea>
+            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">Notas / Trazabilidad</label>
+            <textarea name="notes" id="notes" rows={3} placeholder="Detalles extra, IDs de lotes origen, etc." value={formData.notes} onChange={handleChange} className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none sm:text-sm transition-all"></textarea>
           </div>
 
-          <div className="flex justify-end gap-4 pt-6 border-t border-slate-700 mt-6">
-            <button type="button" onClick={onClose} className="py-2 px-4 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-md transition">Cancelar</button>
-            <button type="submit" className={`py-2 px-6 text-white rounded-md transition shadow-lg ${
-                type === 'grape' ? 'bg-purple-600 hover:bg-purple-500' :
-                type === 'bulk' ? 'bg-amber-600 hover:bg-amber-500' :
-                type === 'material' ? 'bg-emerald-600 hover:bg-emerald-500' :
-                'bg-indigo-600 hover:bg-indigo-500'
+          <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
+            <button type="button" onClick={onClose} className="py-2 px-4 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">Cancelar</button>
+            <button type="submit" className={`py-2 px-6 text-white rounded-lg transition shadow-md font-medium ${
+                type === 'grape' ? 'bg-purple-600 hover:bg-purple-700' :
+                type === 'bulk' ? 'bg-amber-600 hover:bg-amber-700' :
+                type === 'material' ? 'bg-emerald-600 hover:bg-emerald-700' :
+                'bg-indigo-600 hover:bg-indigo-700'
             }`}>
                 Guardar
             </button>
