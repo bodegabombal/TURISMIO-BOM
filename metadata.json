@@ -1,0 +1,5 @@
+{
+  "name": "Gestor de Vinos",
+  "description": "Una aplicación para gestionar tu inventario de vinos, registrar cualidades, entradas y salidas.",
+  "requestFramePermissions": []
+}
